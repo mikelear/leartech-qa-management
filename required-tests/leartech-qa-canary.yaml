@@ -1,0 +1,19 @@
+# required-tests for leartech-qa-canary
+# Consumed by leartech-gate's shift-left-tests quill at promotion time.
+# A promotion PR for leartech-qa-canary fires the gate; the gate reads
+# this file to know which test results MUST be `Success` in the result-store
+# (gs://test-artifacts-product-first/results/v1/leartech-qa-canary/<sha>/<cluster>/...)
+# before allowing the PR check to pass.
+#
+# Phase 1 hardening will add: CUE schema validation, blocking/quarantined
+# flags per test, flake_budget, suite metadata, owner. Spike has minimum.
+
+schema_version: v1
+service: leartech-qa-canary
+type: go-service                 # cross-ref to (future) repo-type-policy
+
+required_tests:
+  - name: 01-page-loads          # matches end2end-ui/01-page-loads.spec.ts in canary
+    test_pack: playwright-ui
+    blocking: true
+    suite: smoke
