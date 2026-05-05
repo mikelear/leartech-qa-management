@@ -13,7 +13,10 @@ service: leartech-qa-canary
 type: go-service                 # cross-ref to (future) repo-type-policy
 
 required_tests:
-  - name: 01-page-loads          # matches end2end-ui/01-page-loads.spec.ts in canary
-    test_pack: playwright-ui
+  # Note: golden Go template ships an `end2end` smoke (Go-style), not `end2end-ui` (Playwright).
+  # See session-0-lessons.md item #9 for the distinction. Spike treats end2end as the
+  # required pack; Phase 1 hardening adds Playwright-on-Go-services if/when needed.
+  - name: smoke
+    test_pack: end2end
     blocking: true
     suite: smoke
