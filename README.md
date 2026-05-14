@@ -1,45 +1,45 @@
 # leartech-qa-management
 
-Single source of truth for the leartech QA system. Consumed by `leartech-gate`, the future risk-assessor, the future arrivals-observer, and any other consumer that needs to know "what tests are required per service" or "what's the routing for QA notifications".
+Single source of truth for the leartech QA system. Designed per `~/leartech/qa-architecture/qa-management-repo.md` to be consumed by every future component that needs to know "what tests are required per service", "what risk class is this service", or "where do QA notifications route".
 
-**Consumed via Renovate-pinned tags** by every consumer — pull-based, audited, easy to revert. No fan-out push from this repo.
+## Current state (2026-05-14)
 
-## Phase 1+ scope (full design)
-
-See `~/leartech/qa-architecture/qa-management-repo.md` for the complete schema and rationale. Phase 1 will add CUE schemas, cross-reference linter, auto-merge policy for additions-only PRs, repo-type-policy with risk_modifiers, service-catalog, risk-config, load-test SLAs, and notification-config.
-
-## Session 0 spike scope (this commit)
-
-Minimum viable for the spike. Hand-rolled YAML — no CUE schemas yet (Phase 1 hardening).
+The repo is **strategic infrastructure that is not yet consumed**. The shift-left quill that previously read `required-tests/*.yaml` was removed from `leartech-gate` on 2026-05-14 — its release-time test-execution design reinvented K8s readiness probes + the post-deploy quill's coverage without genuine value-add. See `leartech-gate/cmd/gate-cli/main.go` for the removal commit's reasoning.
 
 ```
 required-tests/
-  leartech-qa-canary.yaml     — single service, single required test
-gate-metadata/
-  quills.yaml                 — only shift-left-tests entry
-OWNERS
+  leartech-qa-canary.yaml     — empty required_tests:[]; preserved as a
+                                 placeholder for the schema. No reader today.
+OWNERS                         — codeowners stub
+README.md                      — this file
 ```
 
-Contents:
+The repo is kept (not deleted) because it remains the right home for the consumers below as they land.
 
-- **`required-tests/leartech-qa-canary.yaml`** — declares which tests `leartech-gate`'s shift-left-tests quill should look for in the result-store before allowing promotion.
-- **`gate-metadata/quills.yaml`** — declares which quills `leartech-gate` runs and how. Single quill in the spike: `shift-left-tests`. More quills land in Phase 1 hardening.
+## Designed future consumers (not yet built)
 
-## How consumers find this
+Each of these will pull schema from this repo when implemented:
 
-`leartech-gate` reads the repo at run time (Phase 1 will pin via Renovate; spike just reads `@main`):
+- **risk-assessor** — AST-diff → risk classification → test-pack modifier. Will read `risk-config.yaml` + `repo-type-policy.yaml`.
+- **AI coverage scanner** — reads `service-catalog.yaml` to know what coverage targets exist; writes coverage gaps as issues.
+- **leartech-load-testing** — reads `load-slas.yaml` per service for threshold gates.
+- **Notifier framework** — reads `notification-config.yaml` for transport routing (Slack channel, GitHub repo, PagerDuty service) per event type.
+- **Future copromotion / compliance quills in gate-cli** — co-required service pairs, security-attestation policy. Mirrors mqube porcupine's `basicdependency` quill.
+
+## How future consumers find this
+
+Pull-based via Renovate-pinned tags or raw HTTP. No fan-out push from this repo. Consumers cache locally + revalidate on signal.
 
 ```bash
-# Inside leartech-gate Tekton task:
+# Raw HTTP (no clone):
+curl -fsS https://raw.githubusercontent.com/mikelear/leartech-qa-management/main/required-tests/leartech-qa-canary.yaml
+
+# Or shallow clone:
 git clone --depth 1 https://github.com/mikelear/leartech-qa-management.git /tmp/qa-mgmt
-# Or via raw GitHub API:
-gh api repos/mikelear/leartech-qa-management/contents/required-tests/leartech-qa-canary.yaml \
-  --jq .content -r | base64 -d
 ```
 
 ## Companion repos
 
-- `mikelear/leartech-qa-canary` — test fixture service.
-- `mikelear/leartech-qa-sandbox-gitops` — sandbox GitOps repo where promotion PRs land.
-- `mikelear/leartech-gate` — the gate binary that reads this repo.
-- `mikelear/qa-architecture` — design docs.
+- `mikelear/leartech-gate` — the gate binary.
+- `mikelear/leartech-qa-canary` — synthetic test-bed service.
+- `mikelear/qa-architecture` — design docs (start at `qa-management-repo.md` for the full schema).
