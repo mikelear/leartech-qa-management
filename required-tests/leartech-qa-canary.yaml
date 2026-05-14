@@ -12,17 +12,17 @@ schema_version: v1
 service: leartech-qa-canary
 type: go-service                 # cross-ref to (future) repo-type-policy
 
-# Empty required_tests intentionally — the canary's smoke suite is
-# now exercised by the post-deploy quill (leartech-arrivals-observer
-# dispatches an end2end Job against the staging arrival; the gate
-# reads Arrival.phase=Passed). Double-gating on shift-left here
-# duplicates the same smoke test under different path math (shift-left
-# uses {service}/{version}-keyed GCS paths from PR-time builds; post-
-# deploy uses {cluster}/{namespace}/{service}/{version}/{pack}-keyed
-# paths from arrivals-observer). The post-deploy verdict is the load-
-# bearing one for production releases.
+# 2026-05-14 — temporarily populated for the shift-left quill validation
+# cycle. canary is the org's test bed; the entry below references a stub
+# test produced by the leartech-qa-canary release.yaml's shift-left-stub
+# task. See qa-architecture/test-pack-shift-left.md for the 6-branch plan.
 #
-# Reinstate when there's a NEW pre-merge test that has no post-deploy
-# equivalent (e.g. a contract test against a stub backend that only
-# runs at PR-time).
-required_tests: []
+# This is NOT the long-term shape — once the validation cycle is done +
+# the data-driven quill refactor is decided, revisit whether canary should
+# carry real shift-left tests or revert to empty (post-deploy is the
+# load-bearing gate for production releases either way).
+required_tests:
+  - name: canary-healthy
+    test_pack: smoke
+    blocking: true
+    suite: shift-left-validation
